@@ -1,0 +1,195 @@
+#!/usr/bin/env node
+
+/**
+ * Module dependencies.
+ */
+
+var app = require("../app");
+var db = require("../db");
+var debug = require("debug")("chat:server");
+var http = require("http");
+var cv = require("opencv4nodejs");
+
+/**
+ * Get port from environment and store in Express.
+ */
+
+var port = normalizePort(process.env.PORT || "3000");
+app.set("port", port);
+
+/**
+ * Create HTTP server.
+ */
+
+var server = http.createServer(app);
+var io = require("socket.io")(server);
+var sessionid;
+var userCount = 0;
+var clients = io.sockets.clients();
+
+io.sockets.on("connect", function(socket) {
+  sessionid = socket.id;
+  console.log("a user connected " + sessionid);
+  io.clients((error, clients) => {
+    if (error) throw error;
+    console.log(clients); // => [6em3d4TJP8Et9EMNAAAA, G5p55dHhGgUnLUctAAAB]
+  });
+  console.log(clients.server.eio.clientsCount);
+
+  userCount++;
+  io.sockets.emit("userCount", { userCount: userCount });
+});
+
+// listen on every connection
+io.on("connection", function(socket) {
+  socket.on("disconnect", function() {
+    sessionid = socket.id;
+    console.log("a user Desconnected " + sessionid);
+    io.clients((error, clients) => {
+      if (error) throw error;
+      console.log(clients); // => [6em3d4TJP8Et9EMNAAAA, G5p55dHhGgUnLUctAAAB]
+    });
+    console.log(clients.server.eio.clientsCount);
+
+    userCount--;
+    io.sockets.emit("userCount", { userCount: userCount });
+  });
+
+  socket.on("chat message", function(msg) {
+    io.emit("chat message", "@" + socket.id + ": " + msg);
+    var post = { message: msg, session: sessionid };
+    db.query("INSERT INTO messages SET ?", post, function(err, result) {
+      if (err) throw err;
+      console.log("message: " + msg);
+      console.log("1 record inserted");
+    });
+
+  });
+});
+
+const FPS = 10;
+const VIDEO_WIDTH = 320;
+const VIDEO_HEIGTH = 280;
+const classifier = new cv.CascadeClassifier(cv.HAAR_FRONTALFACE_ALT2);
+
+/** Capture Video */
+var wcap = new cv.VideoCapture(0);
+wcap.set(cv.CAP_PROP_FRAME_WIDTH, VIDEO_WIDTH);
+wcap.set(cv.CAP_PROP_FRAME_HEIGHT, VIDEO_HEIGTH);
+
+
+/** Record Video */
+var src  = cv.Mat.type;
+var isColor = (src == cv.CV_8UC3);
+//--- INITIALIZE VIDEOWRITER
+/*var codec = cv.VideoWriter.fourcc("DIVX");  // select desired codec (must be available at runtime)
+var filename = "./live.avi";             // name of the output video file
+var vsize = new cv.Size(cv.CAP_PROP_FRAME_WIDTH,cv.CAP_PROP_FRAME_HEIGHT);
+const rcap = new cv.VideoWriter(filename, codec, FPS, vsize, isColor);*/
+var videoTime = 120;
+
+setInterval(() => {
+
+  var frame = wcap.read();
+  //frame = frame.transpose();
+  frame = frame.flip(1);
+
+  //detect faces
+  const { objects, numDetections} = classifier.detectMultiScale(frame);
+
+  if(!objects.length){
+    //console.log("No Faces detected.");
+  }
+
+  // Draw Detection
+  const numDetectionsTh = 10;
+  objects.forEach((rect,i)=>{
+    const tickness = numDetections[i] < numDetectionsTh ? 1:2;
+    frame.drawRectangle(rect,new cv.Vec3(250,50,30),tickness,cv.LINE_8);
+  });
+
+  var image = cv.imencode(".jpg", frame).toString("base64");
+  io.emit("image", image);
+  
+  if(videoTime>0){
+    //rcap.write(frame);
+    videoTime--;
+  }
+  if(videoTime==0){
+    //rcap.release();
+    ////wcap.release();
+    ////cv.destroyAllWindows();
+    //console.log("Video release");
+    videoTime--;
+  }
+}, 1000 / FPS);
+
+/**
+ * Listen on provided port, on all network interfaces.
+ */
+
+server.listen(port);
+server.on("error", onError);
+server.on("listening", onListening);
+server.on("close",onClose);
+
+/**
+ * Normalize a port into a number, string, or false.
+ */
+
+function normalizePort(val) {
+  var port = parseInt(val, 10);
+
+  if (isNaN(port)) {
+    // named pipe
+    return val;
+  }
+
+  if (port >= 0) {
+    // port number
+    return port;
+  }
+
+  return false;
+}
+
+/**
+ * Event listener for HTTP server "error" event.
+ */
+
+function onError(error) {
+  if (error.syscall !== "listen") {
+    throw error;
+  }
+
+  var bind = typeof port === "string" ? "Pipe " + port : "Port " + port;
+
+  // handle specific listen errors with friendly messages
+  switch (error.code) {
+    case "EACCES":
+      console.error(bind + " requires elevated privileges");
+      process.exit(1);
+      break;
+    case "EADDRINUSE":
+      console.error(bind + " is already in use");
+      process.exit(1);
+      break;
+    default:
+      throw error;
+  }
+}
+
+/**
+ * Event listener for HTTP server "listening" event.
+ */
+
+function onListening() {
+  var addr = server.address();
+  var bind = typeof addr === "string" ? "pipe " + addr : "port " + addr.port;
+  console.log("Listening on " + bind);
+  debug("Listening on " + bind);
+}
+
+function onClose(){
+  console.log("Finished all requests");
+}

@@ -1,0 +1,93 @@
+* {
+  font-family: "Lato", sans-serif;
+}
+body {
+  padding: 5px;
+  font: 18px "Lato", Helvetica, Arial, sans-serif;
+}
+
+a {
+  color: #00b7ff;
+}
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+body {
+  font: 16px Helvetica, Arial;
+}
+footer {
+  background: #000;
+  padding: 3px;
+  width: 100%;
+}
+#m {
+  border: 0;
+  padding: 10px;
+  width: 90%;
+  margin-right: 0.5%;
+}
+.message > button {
+  width: 9%;
+  background: rgb(130, 224, 255);
+  border: none;
+  padding: 10px;
+}
+#messages, #users {
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+  font-size: 18px;
+}
+#messages li, #users li {
+  padding: 5px 10px;
+}
+#messages li:nth-child(even), #users li:nth-child(even){
+  background: rgb(235, 204, 204);
+}
+#messages li:nth-child(odd), #users li:nth-child(odd){
+  background: rgb(119, 92, 92);
+  color: aliceblue;
+}
+.btn-outline-success {
+  color: rgb(130, 224, 255);
+  border-color:  rgb(130, 224, 255);
+}
+.btn-outline-success:hover {
+  color: #fff;
+  background-color: rgb(130, 224, 255);
+  border-color: rgb(130, 224, 255);
+}
+.listusers{
+  position: fixed;
+  top:64px;
+  right: 0;
+  height: 500px;
+  overflow-x: hidden;
+  overflow-y: scroll;
+}
+#countUsers{
+  margin: 0;
+  padding: 5px;
+  font-size: 16px;
+  background:  rgb(44, 37, 78);
+  color: aliceblue;
+  text-align: center;
+}
+#countUsers span{
+  font-size: 22px;
+}
+.stream{
+  position: fixed;
+  top:62px;
+  right: 33%;
+  height: 500px;
+  overflow-x: hidden;
+  overflow-y: hidden;
+  background: transparent;
+}
+#streamvideo > li > img {
+  border:rgb(44, 37, 78) solid 5px;
+  margin: 3px;
+}

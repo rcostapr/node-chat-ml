@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <title>Socket.IO chat</title>
+  <!-- Required meta tags -->
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <link href="https://fonts.googleapis.com/css?family=Lato" rel="stylesheet">
+
+  <link rel="stylesheet" href="/font-awesome/css/font-awesome.css">
+  <!-- Bootstrap CSS -->
+  <link rel="stylesheet" href="/bootstrap/css/bootstrap.css">
+
+  <link rel="stylesheet" href="stylesheets/style.css">
+
+  <script src="/jquery/jquery.min.js"></script>
+  <script src="/bootstrap/js/bootstrap.js"></script>
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    $(function () {
+      var socket = io();
+
+      $("#frmLogin").submit(function (e) {
+        e.preventDefault(); // prevents page reloading
+        return false;
+      });
+
+      $("#frmRegister").submit(function (e) {
+        e.preventDefault(); // prevents page reloading
+        return false;
+      });
+
+      socket.on('connection', function(socket){
+        console.log("Connected" + socket.id);
+      });
+
+      $("#frmMessage").submit(function (e) {
+        e.preventDefault(); // prevents page reloading
+        socket.emit("chat message", $("#m").val());
+        $("#m").val("");
+        return false;
+      });
+      socket.on("chat message", function (msg) {
+        $("#messages").append($("<li>").text(msg));
+        $("html, body").animate({ scrollTop: $(document).height() }, 200);
+      });
+      socket.on("userCount", function(count){
+        $("#countUsers").html("Users Online:&nbsp;&nbsp;&nbsp;&nbsp;<span>" + count.userCount + "</span> ");
+      });
+
+      socket.on("image", function(streamimage){
+          const imageElem = document.getElementById('vd1');
+          imageElem.src = `data:image/jpeg;base64,${streamimage}`;
+      });
+    });
+  </script>
+</head>
+
+<body>
+
+  <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+    <a class="navbar-brand" href="#">Socket.IO</a>
+    <button class="navbar-toggler hidden-lg-up" type="button" data-toggle="collapse" data-target="#collapsibleNavId"
+      aria-controls="collapsibleNavId" aria-expanded="false" aria-label="Toggle navigation"></button>
+    <div class="collapse navbar-collapse" id="collapsibleNavId">
+      <ul class="navbar-nav mr-auto mt-2 mt-lg-0">
+        <li class="nav-item active">
+          <a class="nav-link" href="#">Home <span class="sr-only">(current)</span></a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="#">GIT</a>
+        </li>
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" id="dropdownId" data-toggle="dropdown" aria-haspopup="true"
+            aria-expanded="false">Code</a>
+          <div class="dropdown-menu" aria-labelledby="Code">
+            <a class="dropdown-item" href="#">app.js</a>
+            <a class="dropdown-item" href="#">www</a>
+            <a class="dropdown-item" href="#">index.html</a>
+            <a class="dropdown-item" href="#">css</a>
+          </div>
+        </li>
+      </ul>
+      <form id="frmLogin" class="form-inline my-2 my-lg-0 mr-3">
+        <button id="btnLogin" class="btn btn-outline-success my-2 my-sm-0" type="submit">Login</button>
+      </form>
+      <form id="frmRegister" class="form-inline my-2 my-lg-0">
+        <button id="btnRegister" class="btn btn-outline-success my-2 my-sm-0" type="submit">Register</button>
+      </form>
+    </div>
+  </nav>
+
+  <div id="feed" class="container-fluid" style="margin:60px 0 65px 0">
+    <div class="row">
+      <div class="col-md-4">
+        <ul id="messages"></ul>
+      </div>
+      <div class="col-md-4">
+        <div class="stream">
+          <ul id="streamvideo"><li><img id="vd1"></li></ul>
+        </div>
+      </div>
+      <div class="col-md-4 listusers">
+        <p id="countUsers"></p>
+        <ul id="users"></ul>
+      </div>
+    </div>
+  </div>
+  <footer class="fixed-bottom">
+    <form id="frmMessage" class="message" action="">
+      <input id="m" autocomplete="off" /><button>Send</button>
+    </form>
+  </footer>
+</body>
+</html>

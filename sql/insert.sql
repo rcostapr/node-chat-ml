@@ -1,0 +1,1 @@
+INSERT INTO messages (message,session) VALUES ("asdqqw dqw qwd","OWMg_IYzsxudsf5DAAAD");
